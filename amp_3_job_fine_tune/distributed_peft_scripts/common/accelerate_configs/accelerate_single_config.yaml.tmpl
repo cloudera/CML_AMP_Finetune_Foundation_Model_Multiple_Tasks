@@ -1,0 +1,17 @@
+compute_environment: LOCAL_MACHINE
+distributed_type: NO
+downcast_bf16: 'no'
+gpu_ids: '0'
+machine_rank: $MACHINE_RANK
+main_process_ip: $MAIN_SESSION_IP
+main_process_port: 1234
+main_training_function: main
+mixed_precision: fp16
+num_machines: $NUM_MACHINES
+num_processes: $NUM_PROCESSES
+rdzv_backend: static
+same_network: true
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false

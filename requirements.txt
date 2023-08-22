@@ -1,0 +1,11 @@
+setuptools==58.1.0
+bitsandbytes==0.39.1
+datasets==2.13.0
+accelerate==0.20.3
+loralib==0.1.1
+scipy==1.11.1
+trl==0.4.6
+git+https://github.com/huggingface/transformers@c8aff1d3e63609ea5c732a09c813aa8d8cc20d37
+git+https://github.com/huggingface/peft.git@0b62b4378b4ce9367932c73540349da9a41bdea8
+tensorboard==2.13.0
+gradio==3.36.1
