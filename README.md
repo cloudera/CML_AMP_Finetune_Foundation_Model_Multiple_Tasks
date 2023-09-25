@@ -2,6 +2,8 @@
 
 This repository demonstrates how to use [PEFT](https://huggingface.co/blog/peft) (Parameter-Efficient Fine-Tuning) and distribution techniques to fine-tune open source LLM (Large Language Model) for downstream language tasks.
 
+**Watch it in action along with a brief explanation of PEFT/LoRA [here](https://www.youtube.com/watch?v=ROy4b_-w-Iw).**
+
 ## AMP Overview
 In this AMP we show you how to implement LLM fine-tuning jobs that make use of the QLoRA and Accelerate implementations available in the PEFT open-source library from Huggingface and an example application that swaps the fine-tuned adapters in real time for inference targetting different tasks.
 
@@ -13,7 +15,7 @@ The fine-tuning examples for 3 different tasks are created as CML Jobs that can 
 **NUM_GPU_WORKERS:** Configurable project environment variable set up for this AMP. This is the TOTAL number of distributed GPUs that the fine-tuning jobs will make use of during runtime. (Each individual fine-tuning worker will use a single GPU). If 1 is set, fine-tuning will happen on a single session only without distribution.
 ## AMP Concepts
 ### Fine-tuning optimization techniques
-In this AMP we show how you can use cutting edge fine-tuning techniques to effictiently produce adapters finetuned for language tasks in CML.
+In this AMP we show how you can use cutting edge fine-tuning techniques to efficiently produce adapters finetuned for language tasks in CML.
 - #### PEFT
   PEFT (Parameter-Efficient Fine-Tuning) are a class of fine-tuning techniques which allow for the effecient adaptation of LLMs to downstream tasks, training only a small amount of extra model parameters. 
 
@@ -29,7 +31,7 @@ In this AMP we show how you can use cutting edge fine-tuning techniques to effic
 
   This allows us to use lower cost GPUs compared to full parameter fine-tuning, while still matching the performance of more intensive and costly full fine-tuning.
 
-  All of the libraries required for configuring and launching QLoRA finetuning are available via from huggingface see [requirements.txt](./requirements.txt). Implementation examples from the huggingface can be founde [here](https://huggingface.co/blog/4bit-transformers-bitsandbytes)
+  All of the libraries required for configuring and launching QLoRA finetuning are available via from huggingface see [requirements.txt](./requirements.txt). Implementation examples from the huggingface can be found [here](https://huggingface.co/blog/4bit-transformers-bitsandbytes)
 
 - #### Distributed Training
   Using the PEFT and TRL open-source libraries from Huggingface means we also have easy access to [accelerate](https://github.com/huggingface/accelerate). Another Huggingface library which abstracts away the use of multiple GPUs and machines for fine-tuning jobs. As with many other kinds of distributed workloads, this cuts down on the time to fine-tune dramatically.
@@ -117,4 +119,4 @@ A [notebook example](notebook_accelerate_distributed_fine_tune_sample..ipynb) is
 JupyterLab - Python 3.9 - Nvidia GPU - 2023.05
 ### Recommended Resource Profile
 2 vCPU / 16 GiB Memory / 1 GPU
-+ 1 additional GPU for disctributed worker
++ 1 additional GPU for distributed worker
