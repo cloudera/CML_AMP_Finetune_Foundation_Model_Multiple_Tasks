@@ -87,7 +87,7 @@ The task explorer application in `4_app-task-explorer` loads up all the adapters
 Within the application environment, we make use of the novel benefit of LoRA adapters that allow for swapping of the fine-tuned adapter at runtime to make inference on multiple bespoke tasks seamless and all on a single GPU.
 
 ## Implementation Details
-See detailed implementation descriptions in [distributed_peft_scripts/README.md](./distributed_peft_scripts/README.md)
+See detailed implementation descriptions in [distributed_peft_scripts/README.md](./amp_3_job_fine_tune/distributed_peft_scripts/README.md)
 
 ## AMP Requirements
 
