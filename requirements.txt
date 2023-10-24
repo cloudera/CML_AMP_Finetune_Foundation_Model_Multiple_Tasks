@@ -9,3 +9,4 @@ git+https://github.com/huggingface/transformers@c8aff1d3e63609ea5c732a09c813aa8d
 git+https://github.com/huggingface/peft.git@0b62b4378b4ce9367932c73540349da9a41bdea8
 tensorboard==2.13.0
 gradio==3.36.1
+torch==2.0.1
