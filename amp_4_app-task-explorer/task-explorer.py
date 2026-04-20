@@ -35,11 +35,10 @@ for custom_adapter in custom_lora_adapter_dirs:
    usecase_adapter_dict["Custom Adapter: %s" % custom_adapter] = custom_adapter
 
 for adapter in all_lora_adapter_dirs:
-  # See https://github.com/huggingface/peft/issues/211
-  # This is a PEFT Model, we can load another adapter
-  if hasattr(model, 'load_adapter'):
+  # peft>=0.9 adds load_adapter to the base PreTrainedModel via a mixin, so
+  # hasattr is no longer a reliable proxy — use isinstance instead
+  if isinstance(model, PeftModel):
     model.load_adapter(adapter, adapter_name=adapter)
-  # This is a regular AutoModelForCausalLM, we should use PeftModel.from_pretrained for this first adapter load
   else:
     model = PeftModel.from_pretrained(model=model, model_id=adapter, adapter_name=adapter)
   print("Loaded PEFT Adapter: %s" % adapter)
@@ -144,7 +143,7 @@ with gr.Blocks(theme=theme, css=css) as demo:
                                     )
                         with gr.Row():
                             gen_btn = gr.Button(value="Generate", variant="primary", interactive=False)
-                            clear_btn = gr.ClearButton(value="Reset", components=[], queue=False)
+                            clear_btn = gr.ClearButton(value="Reset", components=[])
                     with gr.Column(variant="panel"):
                         with gr.Row():
                             output_plain_txt = gr.Textbox(value="", label="Base Model Response",lines=1, interactive=False, visible=True, placeholder="...", container = False)
