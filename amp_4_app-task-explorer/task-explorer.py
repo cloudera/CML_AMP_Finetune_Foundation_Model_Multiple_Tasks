@@ -48,7 +48,7 @@ loaded_adapters = list(model.peft_config.keys())
 
 def generate(prompt, max_new_tokens, temperature, repetition_penalty, num_beams, top_p, top_k):
   batch = tokenizer(prompt, return_tensors='pt')
-  with torch.cuda.amp.autocast():
+  with torch.amp.autocast('cuda'):
     output_tokens = model.generate(**batch,
                                     max_new_tokens=max_new_tokens,
                                     repetition_penalty=repetition_penalty,
@@ -84,7 +84,7 @@ def get_responses(adapter_select, prompt, max_new_tokens, temperature, repetitio
                                top_p,
                                top_k)
   print("Generating with  PEFT Adapter: %s" % adapter_select)
-  return (gr.Textbox.update(value=base_generation, visible=True,  lines=5), gr.Textbox.update(value=lora_generation, visible=True,  lines=5))
+  return (gr.update(value=base_generation, visible=True, lines=5), gr.update(value=lora_generation, visible=True, lines=5))
 
 theme = gr.themes.Default().set(
     block_title_padding='*spacing_md',
@@ -99,7 +99,7 @@ with gr.Blocks(theme=theme, css=css) as demo:
     with gr.Row():
         gr.Markdown("# Fine-tuned Foundation Model for Multiple Tasks")
     with gr.Row():
-         with gr.Box():
+         with gr.Group():
                 with gr.Row():
                     with gr.Column():
                         usecase_select = gr.Radio(list(usecase_adapter_dict.keys()), value="Please select a task to complete...", label="Choose a generative AI task", info="Compare Base Model and Fine-tuned PEFT Adapter Responses", interactive=True)
@@ -178,35 +178,35 @@ with gr.Blocks(theme=theme, css=css) as demo:
             interactive_prompt = False
             update_tuple = ex_empty
 
-        return (gr.Textbox.update(value=update_tuple.input_txt, interactive=interactive_prompt, placeholder=update_tuple.placeholder_txt),
-                gr.Slider.update(value=update_tuple.repetition_penalty),
-                gr.Slider.update(value=update_tuple.temperature),
-                gr.Slider.update(value=update_tuple.max_new_tokens),
-                gr.Slider.update(value=update_tuple.num_beams),
-                gr.Slider.update(value=update_tuple.top_p),
-                gr.Slider.update(value=update_tuple.top_k),
-                gr.Textbox.update(value="", visible=True, lines=1),
-                gr.Textbox.update(value="", visible=True, lines=1))
+        return (gr.update(value=update_tuple.input_txt, interactive=interactive_prompt, placeholder=update_tuple.placeholder_txt),
+                gr.update(value=update_tuple.repetition_penalty),
+                gr.update(value=update_tuple.temperature),
+                gr.update(value=update_tuple.max_new_tokens),
+                gr.update(value=update_tuple.num_beams),
+                gr.update(value=update_tuple.top_p),
+                gr.update(value=update_tuple.top_k),
+                gr.update(value="", visible=True, lines=1),
+                gr.update(value="", visible=True, lines=1))
     
     def set_usecase(usecase):
         # Slow user down to highlight changes
         time.sleep(0.5)
         print(usecase)
         if usecase in usecase_adapter_dict:
-           return (gr.Textbox.update(value=usecase_adapter_dict[usecase], visible=True), gr.Button.update(interactive=True))
-        else: 
-            return (gr.TextArea.update(value="...", visible=True), gr.Button.update(interactive=False))
+           return (gr.update(value=usecase_adapter_dict[usecase], visible=True), gr.update(interactive=True))
+        else:
+            return (gr.update(value="...", visible=True), gr.update(interactive=False))
     
     def clear_out():
         empty_example = set_example("")
-        cleared_tuple = empty_example + (gr.TextArea.update(value="..."), gr.TextArea.update(value="", lines=1), gr.Textbox.update(value="", lines=1), gr.Textbox.update(value="Please select a fine-tuned adapter...")) 
+        cleared_tuple = empty_example + (gr.update(value="..."), gr.update(value="", lines=1), gr.update(value="", lines=1), gr.update(value="Please select a fine-tuned adapter..."))
         return cleared_tuple
     
     def show_outputs():
-        return (gr.Textbox.update(visible=True), gr.Textbox.update(visible=True))
-    
+        return (gr.update(visible=True), gr.update(visible=True))
+
     def disable_gen():
-        return gr.Button.update(interactive=False)
+        return gr.update(interactive=False)
     
     usecase_select.change(set_usecase, inputs = [usecase_select], outputs=[adapter_select, gen_btn])
 
@@ -217,8 +217,8 @@ with gr.Blocks(theme=theme, css=css) as demo:
     gen_btn.click(show_outputs, inputs = [], outputs=[output_plain_txt,output_adapter_txt]).then(get_responses, inputs=[adapter_select, input_txt, max_new_tokens, temperature, repetition_penalty, num_beams, top_p, top_k],
                         outputs=[output_plain_txt,output_adapter_txt])
 
+demo.queue()
 demo.launch(server_port=int(os.getenv('CDSW_APP_PORT')),
-           enable_queue=True,
-           show_error=True,
-           server_name='127.0.0.1',
+            show_error=True,
+            server_name='127.0.0.1',
 )

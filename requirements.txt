@@ -1,5 +1,5 @@
 setuptools==69.0.3
-bitsandbytes==0.43.1
+bitsandbytes>=0.49.0
 datasets==2.19.0
 accelerate==0.30.0
 loralib==0.1.2
@@ -8,5 +8,5 @@ trl==0.8.6
 git+https://github.com/huggingface/transformers@c8aff1d3e63609ea5c732a09c813aa8d8cc20d37
 git+https://github.com/huggingface/peft.git@0b62b4378b4ce9367932c73540349da9a41bdea8
 tensorboard==2.16.2
-gradio==4.29.0
+gradio>=5.0
 torch==2.3.0
