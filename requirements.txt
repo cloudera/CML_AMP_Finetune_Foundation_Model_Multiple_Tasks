@@ -5,8 +5,8 @@ accelerate==0.30.0
 loralib==0.1.2
 scipy==1.13.0
 trl==0.8.6
-git+https://github.com/huggingface/transformers@c8aff1d3e63609ea5c732a09c813aa8d8cc20d37
-git+https://github.com/huggingface/peft.git@0b62b4378b4ce9367932c73540349da9a41bdea8
+transformers==4.41.2
+peft==0.11.1
 tensorboard==2.16.2
 gradio>=5.0
 torch==2.3.0
