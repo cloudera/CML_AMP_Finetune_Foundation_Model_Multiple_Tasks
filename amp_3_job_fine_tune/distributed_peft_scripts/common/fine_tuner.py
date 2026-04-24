@@ -23,7 +23,7 @@ class AMPFineTuner:
 
         # Load the base model and tokenizer
         print("Load the base model and tokenizer...\n")
-        self.tokenizer = AutoTokenizer.from_pretrained(base_model, use_auth_token = auth_token)
+        self.tokenizer = AutoTokenizer.from_pretrained(base_model, token=auth_token)
 
         self.tokenizer.pad_token = self.tokenizer.eos_token
         compute_dtype = getattr(torch, "float16")
@@ -37,10 +37,10 @@ class AMPFineTuner:
         )
             
         self.model = AutoModelForCausalLM.from_pretrained(
-            base_model, 
+            base_model,
             quantization_config=bnb_config,
             device_map='auto',
-            use_auth_token = auth_token,
+            token=auth_token,
         )
 
         # transformers.TrainingArguments defaults

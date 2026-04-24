@@ -35,11 +35,10 @@ for custom_adapter in custom_lora_adapter_dirs:
    usecase_adapter_dict["Custom Adapter: %s" % custom_adapter] = custom_adapter
 
 for adapter in all_lora_adapter_dirs:
-  # See https://github.com/huggingface/peft/issues/211
-  # This is a PEFT Model, we can load another adapter
-  if hasattr(model, 'load_adapter'):
+  # peft>=0.9 adds load_adapter to the base PreTrainedModel via a mixin, so
+  # hasattr is no longer a reliable proxy — use isinstance instead
+  if isinstance(model, PeftModel):
     model.load_adapter(adapter, adapter_name=adapter)
-  # This is a regular AutoModelForCausalLM, we should use PeftModel.from_pretrained for this first adapter load
   else:
     model = PeftModel.from_pretrained(model=model, model_id=adapter, adapter_name=adapter)
   print("Loaded PEFT Adapter: %s" % adapter)
@@ -47,8 +46,8 @@ for adapter in all_lora_adapter_dirs:
 loaded_adapters = list(model.peft_config.keys())
 
 def generate(prompt, max_new_tokens, temperature, repetition_penalty, num_beams, top_p, top_k):
-  batch = tokenizer(prompt, return_tensors='pt')
-  with torch.cuda.amp.autocast():
+  batch = tokenizer(prompt, return_tensors='pt').to(model.device)
+  with torch.amp.autocast('cuda'):
     output_tokens = model.generate(**batch,
                                     max_new_tokens=max_new_tokens,
                                     repetition_penalty=repetition_penalty,
@@ -84,7 +83,7 @@ def get_responses(adapter_select, prompt, max_new_tokens, temperature, repetitio
                                top_p,
                                top_k)
   print("Generating with  PEFT Adapter: %s" % adapter_select)
-  return (gr.Textbox.update(value=base_generation, visible=True,  lines=5), gr.Textbox.update(value=lora_generation, visible=True,  lines=5))
+  return (gr.update(value=base_generation, visible=True, lines=5), gr.update(value=lora_generation, visible=True, lines=5))
 
 theme = gr.themes.Default().set(
     block_title_padding='*spacing_md',
@@ -99,57 +98,30 @@ with gr.Blocks(theme=theme, css=css) as demo:
     with gr.Row():
         gr.Markdown("# Fine-tuned Foundation Model for Multiple Tasks")
     with gr.Row():
-         with gr.Box():
-                with gr.Row():
-                    with gr.Column():
-                        usecase_select = gr.Radio(list(usecase_adapter_dict.keys()), value="Please select a task to complete...", label="Choose a generative AI task", info="Compare Base Model and Fine-tuned PEFT Adapter Responses", interactive=True)
-                    
-                        with gr.Row():
-                            with gr.Row(variant="panel"):
-                                with gr.Column():
-                                    base_model = gr.TextArea(label="\tBase Model", value="bigscience/bloom1b1", container = False, lines=1, visible=True, interactive=False)
-                                with gr.Column():
-                                    adapter_select = gr.TextArea(label="\tPEFT[LoRA] Adapter", container = False, value="...", lines=1, visible=True, interactive=False)
-                        input_txt = gr.Textbox(label="Engineered Prompt", value="Select a task example above to edit...", lines=3, interactive=False)
-                        with gr.Accordion("Advanced Generation Options", open=False):
-                            with gr.Column():
-                                with gr.Row():
-                                    max_new_tokens = gr.Slider(
-                                        minimum=0, maximum=256, step=1, value=50,
-                                        label="Max New Tokens",
-                                    )
-                                    num_beams = gr.Slider(
-                                        minimum=1, maximum=10, step=1, value=1,
-                                        label="Num Beams",
-                                    )
-                                    repetition_penalty = gr.Slider(
-                                        minimum=0.01, maximum=4.5, step=0.01, value=1.1,
-                                        label="Repeat Penalty",
-                                    )
-
-                                with gr.Row():
-                                    temperature = gr.Slider(
-                                        minimum=0.01, maximum=1.99, step=0.01, value=0.7,
-                                        label="Temperature",
-                                    )
-
-                                    top_p = gr.Slider(
-                                        minimum=0, maximum=1.0, step=0.01, value=1.0,
-                                        label="Top P", interactive = True,
-                                    )
-
-                                    top_k = gr.Slider(
-                                        minimum=0, maximum=200, step=1, value=0,
-                                        label="Top K",
-                                    )
-                        with gr.Row():
-                            gen_btn = gr.Button(value="Generate", variant="primary", interactive=False)
-                            clear_btn = gr.ClearButton(value="Reset", components=[], queue=False)
-                    with gr.Column(variant="panel"):
-                        with gr.Row():
-                            output_plain_txt = gr.Textbox(value="", label="Base Model Response",lines=1, interactive=False, visible=True, placeholder="...", container = False)
-                        with gr.Row():
-                            output_adapter_txt = gr.Textbox(value="", label="Fine-tuned PEFT Adapter Response", lines=1, interactive=False, visible=True, placeholder="...", container = False)
+        with gr.Column():
+            usecase_select = gr.Radio(list(usecase_adapter_dict.keys()), value="Please select a task to complete...", label="Choose a generative AI task", info="Compare Base Model and Fine-tuned PEFT Adapter Responses", interactive=True)
+            with gr.Row(variant="panel"):
+                with gr.Column():
+                    base_model = gr.TextArea(label="\tBase Model", value="bigscience/bloom1b1", container=False, lines=1, visible=True, interactive=False)
+                with gr.Column():
+                    adapter_select = gr.TextArea(label="\tPEFT[LoRA] Adapter", container=False, value="...", lines=1, visible=True, interactive=False)
+            input_txt = gr.Textbox(label="Engineered Prompt", value="Select a task example above to edit...", lines=3, interactive=False)
+            with gr.Accordion("Advanced Generation Options", open=False):
+                with gr.Column():
+                    with gr.Row():
+                        max_new_tokens = gr.Slider(minimum=0, maximum=256, step=1, value=50, label="Max New Tokens")
+                        num_beams = gr.Slider(minimum=1, maximum=10, step=1, value=1, label="Num Beams")
+                        repetition_penalty = gr.Slider(minimum=0.01, maximum=4.5, step=0.01, value=1.1, label="Repeat Penalty")
+                    with gr.Row():
+                        temperature = gr.Slider(minimum=0.01, maximum=1.99, step=0.01, value=0.7, label="Temperature")
+                        top_p = gr.Slider(minimum=0, maximum=1.0, step=0.01, value=1.0, label="Top P", interactive=True)
+                        top_k = gr.Slider(minimum=0, maximum=200, step=1, value=0, label="Top K")
+            with gr.Row():
+                gen_btn = gr.Button(value="Generate", variant="primary", interactive=False)
+                clear_btn = gr.ClearButton(value="Reset", components=[])
+        with gr.Column():
+            output_plain_txt = gr.Textbox(value="", label="Base Model Response", lines=5, interactive=False, visible=True, placeholder="...")
+            output_adapter_txt = gr.Textbox(value="", label="Fine-tuned PEFT Adapter Response", lines=5, interactive=False, visible=True, placeholder="...")
                         
              
 
@@ -178,35 +150,35 @@ with gr.Blocks(theme=theme, css=css) as demo:
             interactive_prompt = False
             update_tuple = ex_empty
 
-        return (gr.Textbox.update(value=update_tuple.input_txt, interactive=interactive_prompt, placeholder=update_tuple.placeholder_txt),
-                gr.Slider.update(value=update_tuple.repetition_penalty),
-                gr.Slider.update(value=update_tuple.temperature),
-                gr.Slider.update(value=update_tuple.max_new_tokens),
-                gr.Slider.update(value=update_tuple.num_beams),
-                gr.Slider.update(value=update_tuple.top_p),
-                gr.Slider.update(value=update_tuple.top_k),
-                gr.Textbox.update(value="", visible=True, lines=1),
-                gr.Textbox.update(value="", visible=True, lines=1))
+        return (gr.update(value=update_tuple.input_txt, interactive=interactive_prompt, placeholder=update_tuple.placeholder_txt),
+                gr.update(value=update_tuple.repetition_penalty),
+                gr.update(value=update_tuple.temperature),
+                gr.update(value=update_tuple.max_new_tokens),
+                gr.update(value=update_tuple.num_beams),
+                gr.update(value=update_tuple.top_p),
+                gr.update(value=update_tuple.top_k),
+                gr.update(value="", visible=True, lines=1),
+                gr.update(value="", visible=True, lines=1))
     
     def set_usecase(usecase):
         # Slow user down to highlight changes
         time.sleep(0.5)
         print(usecase)
         if usecase in usecase_adapter_dict:
-           return (gr.Textbox.update(value=usecase_adapter_dict[usecase], visible=True), gr.Button.update(interactive=True))
-        else: 
-            return (gr.TextArea.update(value="...", visible=True), gr.Button.update(interactive=False))
+           return (gr.update(value=usecase_adapter_dict[usecase], visible=True), gr.update(interactive=True))
+        else:
+            return (gr.update(value="...", visible=True), gr.update(interactive=False))
     
     def clear_out():
         empty_example = set_example("")
-        cleared_tuple = empty_example + (gr.TextArea.update(value="..."), gr.TextArea.update(value="", lines=1), gr.Textbox.update(value="", lines=1), gr.Textbox.update(value="Please select a fine-tuned adapter...")) 
+        cleared_tuple = empty_example + (gr.update(value="..."), gr.update(value="", lines=1), gr.update(value="", lines=1), gr.update(value="Please select a fine-tuned adapter..."))
         return cleared_tuple
     
     def show_outputs():
-        return (gr.Textbox.update(visible=True), gr.Textbox.update(visible=True))
-    
+        return (gr.update(visible=True), gr.update(visible=True))
+
     def disable_gen():
-        return gr.Button.update(interactive=False)
+        return gr.update(interactive=False)
     
     usecase_select.change(set_usecase, inputs = [usecase_select], outputs=[adapter_select, gen_btn])
 
@@ -217,8 +189,8 @@ with gr.Blocks(theme=theme, css=css) as demo:
     gen_btn.click(show_outputs, inputs = [], outputs=[output_plain_txt,output_adapter_txt]).then(get_responses, inputs=[adapter_select, input_txt, max_new_tokens, temperature, repetition_penalty, num_beams, top_p, top_k],
                         outputs=[output_plain_txt,output_adapter_txt])
 
+demo.queue()
 demo.launch(server_port=int(os.getenv('CDSW_APP_PORT')),
-           enable_queue=True,
-           show_error=True,
-           server_name='127.0.0.1',
+            show_error=True,
+            server_name='127.0.0.1',
 )
